@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement class="debug-root">
+        <ui:VisualElement name="sidebar" class="debug-sidebar">
+            <ui:Label text="Debug Classes" class="sidebar-title" />
+            <ui:ListView name="class-list" class="debug-class-list" />
+        </ui:VisualElement>
+        <ui:ScrollView name="detail-scroll" class="detail-scroll">
+            <ui:VisualElement name="detail-container" class="detail-container" />
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>
