@@ -14,6 +14,8 @@ namespace Fsi.Debug
 	public sealed class DebugWindow : EditorWindow
 	{
 		private const float SidebarWidth = 260f;
+		private const string UxmlPath = "Packages/com.fallingsnowinteractive.debug/Editor/DebugWindow.uxml";
+		private const string UssPath = "Packages/com.fallingsnowinteractive.debug/Editor/DebugWindow.uss";
 
 		private readonly List<DebugClassInfo> classes = new();
 		private readonly List<Action> refreshActions = new();
@@ -48,73 +50,49 @@ namespace Fsi.Debug
 
 		public void CreateGUI()
 		{
-			rootVisualElement.style.flexDirection = FlexDirection.Row;
+			rootVisualElement.Clear();
+			rootVisualElement.AddToClassList("debug-window");
 
-			VisualElement sidebar = new()
-			                        {
-				                        style =
-				                        {
-					                        width = SidebarWidth,
-					                        flexShrink = 0,
-					                        flexGrow = 0,
-					                        paddingLeft = 6,
-					                        paddingRight = 6,
-					                        paddingTop = 6,
-				                        },
-			                        };
+			VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UxmlPath);
+			if (visualTree != null)
+			{
+				visualTree.CloneTree(rootVisualElement);
+			}
 
-			Label sidebarLabel = new("Debug Classes")
-			                     {
-				                     style =
-				                     {
-					                     unityFontStyleAndWeight = FontStyle.Bold,
-				                     },
-			                     };
-			sidebar.Add(sidebarLabel);
+			StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(UssPath);
+			if (styleSheet != null)
+			{
+				rootVisualElement.styleSheets.Add(styleSheet);
+			}
 
-			classListView = new ListView
-			                {
-				                selectionType = SelectionType.Single,
-				                style =
-				                {
-					                flexGrow = 1,
-					                marginTop = 6,
-				                },
-				                makeItem = () => new Label(),
-				                bindItem = (element, index) =>
-				                           {
-					                           if (element is Label label && index >= 0 && index < classes.Count)
-					                           {
-						                           label.text = classes[index].DisplayName;
-					                           }
-				                           },
-			                };
+			VisualElement sidebar = rootVisualElement.Q<VisualElement>("sidebar");
+			classListView = rootVisualElement.Q<ListView>("class-list");
+			detailScrollView = rootVisualElement.Q<ScrollView>("detail-scroll");
+			detailContainer = rootVisualElement.Q<VisualElement>("detail-container");
 
-			classListView.selectionChanged += OnClassSelectionChanged;
-			sidebar.Add(classListView);
-			rootVisualElement.Add(sidebar);
+			if (sidebar != null)
+			{
+				sidebar.style.width = SidebarWidth;
+			}
 
-			detailScrollView = new ScrollView
-			                   {
-				                   style =
-				                   {
-					                   flexGrow = 1,
-					                   paddingLeft = 10,
-					                   paddingRight = 10,
-					                   paddingTop = 6,
-				                   },
-			                   };
-
-			detailContainer = new VisualElement
-			                  {
-				                  style =
-				                  {
-					                  flexGrow = 1,
-				                  },
-			                  };
-			detailScrollView.Add(detailContainer);
-
-			rootVisualElement.Add(detailScrollView);
+			if (classListView != null)
+			{
+				classListView.selectionType = SelectionType.Single;
+				classListView.makeItem = () =>
+				{
+					Label label = new();
+					label.AddToClassList("debug-class-item");
+					return label;
+				};
+				classListView.bindItem = (element, index) =>
+				{
+					if (element is Label label && index >= 0 && index < classes.Count)
+					{
+						label.text = classes[index].DisplayName;
+					}
+				};
+				classListView.selectionChanged += OnClassSelectionChanged;
+			}
 
 			RefreshClassList();
 		}
@@ -181,19 +159,14 @@ namespace Fsi.Debug
 
 			if (selectedClass == null)
 			{
-				detailContainer.Add(new Label("Select a debug class to inspect."));
+				Label emptyLabel = new("Select a debug class to inspect.");
+				emptyLabel.AddToClassList("empty-message");
+				detailContainer.Add(emptyLabel);
 				return;
 			}
 
-			Label header = new(selectedClass.DisplayName)
-			               {
-				               style =
-				               {
-					               unityFontStyleAndWeight = FontStyle.Bold,
-					               fontSize = 14,
-					               marginBottom = 6,
-				               },
-			               };
+			Label header = new(selectedClass.DisplayName);
+			header.AddToClassList("debug-header");
 			detailContainer.Add(header);
 
 			AddInstanceSelector();
@@ -209,7 +182,9 @@ namespace Fsi.Debug
 
 			if (selectedClass.Instances.Count == 0)
 			{
-				detailContainer.Add(new Label("No instances found for this type."));
+				Label emptyLabel = new("No instances found for this type.");
+				emptyLabel.AddToClassList("empty-message");
+				detailContainer.Add(emptyLabel);
 				selectedInstance = null;
 				return;
 			}
@@ -223,32 +198,15 @@ namespace Fsi.Debug
 			selectedInstanceIndex = Mathf.Clamp(selectedInstanceIndex, 0, instanceLabels.Count - 1);
 			selectedInstance = selectedClass.Instances[selectedInstanceIndex];
 
-			VisualElement instanceRow = new()
-			                            {
-				                            style =
-				                            {
-					                            flexDirection = FlexDirection.Row,
-					                            alignItems = Align.Center,
-					                            marginBottom = 8,
-				                            },
-			                            };
+			VisualElement instanceRow = new();
+			instanceRow.AddToClassList("instance-row");
 
-			Label label = new("Instance")
-			              {
-				              style =
-				              {
-					              minWidth = 80,
-				              },
-			              };
+			Label label = new("Instance");
+			label.AddToClassList("instance-label");
 			instanceRow.Add(label);
 
-			PopupField<string> popup = new(instanceLabels, selectedInstanceIndex)
-			                           {
-				                           style =
-				                           {
-					                           flexGrow = 1,
-				                           },
-			                           };
+			PopupField<string> popup = new(instanceLabels, selectedInstanceIndex);
+			popup.AddToClassList("instance-popup");
 			popup.RegisterValueChangedCallback(evt =>
 			                                   {
 				                                   int newIndex = instanceLabels.IndexOf(evt.newValue);
@@ -273,7 +231,9 @@ namespace Fsi.Debug
 
 			if (selectedClass.Members.Count == 0)
 			{
-				detailContainer.Add(new Label("No debug members available."));
+				Label emptyLabel = new("No debug members available.");
+				emptyLabel.AddToClassList("empty-message");
+				detailContainer.Add(emptyLabel);
 				return;
 			}
 
@@ -289,15 +249,8 @@ namespace Fsi.Debug
 					currentCategory = member.Category;
 					if (!string.IsNullOrWhiteSpace(currentCategory))
 					{
-						Label categoryLabel = new(currentCategory)
-						                      {
-							                      style =
-							                      {
-								                      unityFontStyleAndWeight = FontStyle.Bold,
-								                      marginTop = 6,
-								                      marginBottom = 4,
-							                      },
-						                      };
+						Label categoryLabel = new(currentCategory);
+						categoryLabel.AddToClassList("category-label");
 						detailContainer.Add(categoryLabel);
 					}
 				}
@@ -312,37 +265,22 @@ namespace Fsi.Debug
 
 		private VisualElement BuildValueRow(DebugMemberInfo member)
 		{
-			VisualElement row = new()
-			                    {
-				                    style =
-				                    {
-					                    flexDirection = FlexDirection.Row,
-					                    alignItems = Align.Center,
-					                    marginBottom = 4,
-				                    },
-			                    };
+			VisualElement row = new();
+			row.AddToClassList("member-row");
+			row.AddToClassList("member-row-value");
 
-			Label nameLabel = new(member.DisplayName)
-			                  {
-				                  style =
-				                  {
-					                  minWidth = 160,
-					                  flexShrink = 0,
-				                  },
-			                  };
+			Label nameLabel = new(member.DisplayName);
+			nameLabel.AddToClassList("member-name");
 			row.Add(nameLabel);
 
-			VisualElement valueContainer = new()
-			                               {
-				                               style =
-				                               {
-					                               flexGrow = 1,
-				                               },
-			                               };
+			VisualElement valueContainer = new();
+			valueContainer.AddToClassList("member-value");
 
 			if (selectedInstance == null || member.Getter == null)
 			{
-				valueContainer.Add(new Label("N/A"));
+				Label notAvailable = new("N/A");
+				notAvailable.AddToClassList("value-field");
+				valueContainer.Add(notAvailable);
 				row.Add(valueContainer);
 				return row;
 			}
@@ -355,6 +293,7 @@ namespace Fsi.Debug
 			                                       newValue => member.Setter?.Invoke(selectedInstance, newValue),
 			                                       () => member.Getter(selectedInstance));
 
+			field.AddToClassList("value-field");
 			valueContainer.Add(field);
 			row.Add(valueContainer);
 			return row;
@@ -362,33 +301,16 @@ namespace Fsi.Debug
 
 		private VisualElement BuildMethodRow(DebugMemberInfo member)
 		{
-			VisualElement row = new()
-			                    {
-				                    style =
-				                    {
-					                    flexDirection = FlexDirection.Column,
-					                    marginBottom = 8,
-				                    },
-			                    };
+			VisualElement row = new();
+			row.AddToClassList("member-row");
+			row.AddToClassList("member-row-method");
 
-			Label nameLabel = new(member.DisplayName)
-			                  {
-				                  style =
-				                  {
-					                  unityFontStyleAndWeight = FontStyle.Bold,
-				                  },
-			                  };
+			Label nameLabel = new(member.DisplayName);
+			nameLabel.AddToClassList("method-name");
 			row.Add(nameLabel);
 
-			VisualElement inputRow = new()
-			                         {
-				                         style =
-				                         {
-					                         flexDirection = FlexDirection.Row,
-					                         alignItems = Align.Center,
-					                         marginTop = 4,
-				                         },
-			                         };
+			VisualElement inputRow = new();
+			inputRow.AddToClassList("method-input-row");
 
 			object[] parameterValues = member.Parameters?.Select(GetDefaultValue).ToArray() ?? Array.Empty<object>();
 
@@ -404,32 +326,21 @@ namespace Fsi.Debug
 					                                                newValue => parameterValues[parameterIndex] = newValue,
 					                                                () => parameterValues[parameterIndex]);
 
-					parameterField.style.marginRight = 6;
+					parameterField.AddToClassList("parameter-field");
 					inputRow.Add(parameterField);
 				}
 			}
 
 			Label resultLabel = null;
-			Button button = new()
-			                {
-				                text = "Invoke",
-				                style =
-				                {
-					                minWidth = 80,
-				                },
-			                };
+			Button button = new() { text = "Invoke" };
+			button.AddToClassList("invoke-button");
 			inputRow.Add(button);
 			row.Add(inputRow);
 
 			if (member.ValueType != typeof(void))
 			{
-				resultLabel = new Label("Result: -")
-				              {
-					              style =
-					              {
-						              marginLeft = 6,
-					              },
-				              };
+				resultLabel = new Label("Result: -");
+				resultLabel.AddToClassList("method-result");
 				row.Add(resultLabel);
 			}
 
