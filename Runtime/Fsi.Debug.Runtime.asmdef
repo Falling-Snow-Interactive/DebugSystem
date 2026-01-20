@@ -1,0 +1,14 @@
+{
+    "name": "Fsi.Debug.Runtime",
+    "rootNamespace": "Fsi.Debug",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

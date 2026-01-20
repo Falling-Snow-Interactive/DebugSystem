@@ -1,0 +1,16 @@
+{
+    "name": "Fsi.Debug.Editor",
+    "rootNamespace": "Fsi.Debug",
+    "references": [
+        "GUID:404d9b6aa36094c2da0893c7e92b6275"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
