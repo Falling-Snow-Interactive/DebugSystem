@@ -1,14 +1,14 @@
 {
-  "name": "com.fallingsnowinteractive.[PackageLower]",
+  "name": "com.fallingsnowinteractive.debug",
   "version": "0.0.1",
-  "displayName": "FSI [PackageName]",
-  "description": "[PackageName] package developed by Falling Snow Interactive.",
+  "displayName": "FSI Debug System",
+  "description": "Debug System package developed by Falling Snow Interactive.",
   "unity": "6000.2",
   "unityRelease": "6f2",
-  "keywords": ["[Keyword1]", "[Keyword2]", "[Keyword3]"],
+  "keywords": ["Debugging"],
   "author": {
-    "name": "[AuthorName]",
-    "email": "[AuthorEmail]"
+    "name": "Kira Dinan",
+    "email": "kira.dinan@fallingsnowinteractive.ca"
   },
   "hideInEditor": false,
   "dependencies": {

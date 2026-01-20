@@ -1,2 +1,2 @@
-# UnityPackage
-Template repo for Falling Snow Interactive packages for Unity
+# Debug System
+Debug System for Unity developed by Falling Snow Interactive
