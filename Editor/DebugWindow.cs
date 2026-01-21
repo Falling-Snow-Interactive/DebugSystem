@@ -14,13 +14,13 @@ namespace Fsi.Debug
 	public sealed class DebugWindow : EditorWindow
 	{
 		private const string UssPath = "Packages/com.fallingsnowinteractive.debug/Editor/DebugWindow.uss";
+		private const float ClassListItemHeight = 28f;
 
 		private readonly List<DebugClassInfo> classes = new();
 		private readonly List<Action> refreshActions = new();
 		
 		// Elements
 		private ListView classListView;
-		private ScrollView detailScrollView;
 		private VisualElement detailContainer;
 		private DebugClassInfo selectedClass;
 		private Object selectedInstance;
@@ -64,34 +64,10 @@ namespace Fsi.Debug
 			// Build sidebar
 			VisualElement sidebar = CreateSidebar();
 			rootVisualElement.Add(sidebar);
-
-			// Detail panel
-			detailScrollView = new ScrollView();
-			detailScrollView.AddToClassList("detail-scroll");
-			rootVisualElement.Add(detailScrollView);
-
-			detailContainer = new VisualElement();
-			detailContainer.AddToClassList("detail-container");
-			detailScrollView.Add(detailContainer);
-
-			if (classListView != null)
-			{
-				classListView.selectionType = SelectionType.Single;
-				classListView.makeItem = () =>
-				                         {
-					                         Label label = new();
-					                         label.AddToClassList("class-item");
-					                         return label;
-				                         };
-				classListView.bindItem = (element, index) =>
-				                         {
-					                         if (element is Label label && index >= 0 && index < classes.Count)
-					                         {
-						                         label.text = classes[index].DisplayName;
-					                         }
-				                         };
-				classListView.selectionChanged += OnClassSelectionChanged;
-			}
+			
+			// Build details panel
+			VisualElement details = CreateDetailsPanel();
+			rootVisualElement.Add(details);
 
 			RefreshClassList();
 		}
@@ -99,13 +75,13 @@ namespace Fsi.Debug
 		private VisualElement CreateSidebar()
 		{
 			// Build sidebar
-			VisualElement sidebar = new();
-			sidebar.AddToClassList("sidebar");
+			VisualElement root = new();
+			root.AddToClassList("sidebar-panel");
 			
 			// Toolbar
 			Toolbar toolbar = new();
 			toolbar.AddToClassList("toolbar");
-			sidebar.Add(toolbar);
+			root.Add(toolbar);
 			
 			Label toolbarLabel = new("Debug Classes");
 			toolbarLabel.AddToClassList("toolbar-label");
@@ -113,16 +89,57 @@ namespace Fsi.Debug
 			
 			toolbar.Add(new ToolbarSpacer());
 			
-			ToolbarButton refreshButton = new(null) { text = "Refresh" }; // TODO - Refresh classes
+			ToolbarButton refreshButton = new(RefreshClassList) { text = "Refresh" };
 			refreshButton.AddToClassList("toolbar-button");
 			toolbar.Add(refreshButton);
 
 			// Class List
-			classListView = new ListView();
-			classListView.AddToClassList("class-list");
-			sidebar.Add(classListView);
+			ListView listView = new();
+			classListView = listView;
+			listView.AddToClassList("class-list");
+
+			// ListView uses virtualization; it needs to know the row height for correct viewport/scroll calculations.
+			// Keep this in sync with the USS height (including padding) for .class-item / list rows.
+			listView.fixedItemHeight = ClassListItemHeight;
 			
-			return sidebar;
+			listView.selectionType = SelectionType.Single;
+			listView.makeItem = () =>
+			                    {
+				                    Label label = new();
+				                    label.AddToClassList("class-item");
+				                    // Ensure the element itself matches the ListView's fixed height.
+				                    label.style.height = ClassListItemHeight;
+				                    return label;
+			                    };
+			listView.bindItem = (element, index) =>
+			                    {
+				                    if (element is Label label && index >= 0 && index < classes.Count)
+				                    {
+					                    label.text = classes[index].DisplayName;
+				                    }
+			                    };
+			listView.selectionChanged += OnClassSelectionChanged;
+
+			root.Add(listView);
+			
+			return root;
+		}
+
+		private VisualElement CreateDetailsPanel()
+		{
+			VisualElement root = new();
+			root.AddToClassList("detail-panel");
+			
+			// Detail panel
+			ScrollView detailScrollView = new();
+			detailScrollView.AddToClassList("detail-scroll");
+			root.Add(detailScrollView);
+
+			detailContainer = new VisualElement();
+			detailContainer.AddToClassList("detail-container");
+			detailScrollView.Add(detailContainer);
+
+			return root;
 		}
 		
 		#endregion
@@ -208,12 +225,26 @@ namespace Fsi.Debug
 			Label header = new(selectedClass.DisplayName);
 			header.AddToClassList("detail-header");
 			detailContainer.Add(header);
+			
+			// Toolbar
+			Toolbar toolbar = new();
+			toolbar.AddToClassList("toolbar");
+			detailContainer.Add(toolbar);
 
-			AddInstanceSelector();
+			AddInstanceSelector(toolbar);
+			
+			ToolbarSpacer spacer = new();
+			spacer.AddToClassList("toolbar-spacer");
+			toolbar.Add(spacer);
+			
+			ToolbarButton refreshButton = new(RefreshClassList) { text = "Refresh" };
+			refreshButton.AddToClassList("toolbar-button");
+			toolbar.Add(refreshButton);
+			
 			AddMemberDetails();
 		}
 
-		private void AddInstanceSelector()
+		private void AddInstanceSelector(Toolbar toolbar)
 		{
 			if (selectedClass == null)
 			{
@@ -224,7 +255,8 @@ namespace Fsi.Debug
 			{
 				Label emptyLabel = new("No instances found for this type.");
 				emptyLabel.AddToClassList("empty-message");
-				detailContainer.Add(emptyLabel);
+				emptyLabel.AddToClassList("toolbar-label");
+				toolbar.Add(emptyLabel);
 				selectedInstance = null;
 				return;
 			}
@@ -238,28 +270,38 @@ namespace Fsi.Debug
 			selectedInstanceIndex = Mathf.Clamp(selectedInstanceIndex, 0, instanceLabels.Count - 1);
 			selectedInstance = selectedClass.Instances[selectedInstanceIndex];
 
-			VisualElement instanceRow = new();
-			instanceRow.AddToClassList("instance-row");
+			ToolbarMenu instanceMenu = new();
+			instanceMenu.AddToClassList("toolbar-menu");
+			instanceMenu.text = $"{selectedInstance.name} ({selectedInstance.GetInstanceID()})";
+			foreach (string instanceLabel in instanceLabels)
+			{
+				instanceMenu.menu.AppendAction($"{instanceLabel}", null);
+			}
 
-			Label label = new("Instance");
-			label.AddToClassList("instance-label");
-			instanceRow.Add(label);
-
-			PopupField<string> popup = new(instanceLabels, selectedInstanceIndex);
-			popup.AddToClassList("instance-popup");
-			popup.RegisterValueChangedCallback(evt =>
-			                                   {
-				                                   int newIndex = instanceLabels.IndexOf(evt.newValue);
-				                                   if (newIndex >= 0 && newIndex < selectedClass.Instances.Count)
-				                                   {
-					                                   selectedInstanceIndex = newIndex;
-					                                   selectedInstance = selectedClass.Instances[newIndex];
-					                                   RebuildDetails();
-				                                   }
-			                                   });
-
-			instanceRow.Add(popup);
-			detailContainer.Add(instanceRow);
+			toolbar.Add(instanceMenu);
+			
+			// VisualElement instanceRow = new();
+			// instanceRow.AddToClassList("instance-row");
+			//
+			// Label label = new("Instance");
+			// label.AddToClassList("instance-label");
+			// instanceRow.Add(label);
+			//
+			// PopupField<string> popup = new(instanceLabels, selectedInstanceIndex);
+			// popup.AddToClassList("instance-popup");
+			// popup.RegisterValueChangedCallback(evt =>
+			//                                    {
+			// 	                                   int newIndex = instanceLabels.IndexOf(evt.newValue);
+			// 	                                   if (newIndex >= 0 && newIndex < selectedClass.Instances.Count)
+			// 	                                   {
+			// 		                                   selectedInstanceIndex = newIndex;
+			// 		                                   selectedInstance = selectedClass.Instances[newIndex];
+			// 		                                   RebuildDetails();
+			// 	                                   }
+			//                                    });
+			//
+			// instanceRow.Add(popup);
+			// detailContainer.Add(instanceRow);
 		}
 
 		private void AddMemberDetails()

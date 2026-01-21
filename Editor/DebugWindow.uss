@@ -3,8 +3,10 @@
     flex-grow: 1;
 }
 
-/* Sidebar */
-.sidebar {
+/* ======================================================
+   Sidebar
+   ====================================================== */
+.sidebar-panel {
     width: 300px;
 
     flex-shrink: 0;
@@ -12,20 +14,21 @@
     flex-direction: column;
 
     border-width: 1px;
+    border-color: rgb(35, 35, 35);
     background-color: #2b2b2b;
 }
 
 .toolbar {
     flex-grow: 0;
-    height: 25px;
-    
-    padding: 5px;
+    height: 28px;
 }
 
 .toolbar-label {
     -unity-font-style: bold;
     flex-grow: 1;
     -unity-text-align: middle-left;
+    
+    padding-left: 10px;
 }
 
 .toolbar-button{
@@ -33,16 +36,30 @@
     flex-shrink: 0;
 }
 
+.toolbar-spacer {
+    flex-grow: 1;
+}
+
+.toolbar-menu {
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
 .class-list {
     flex-grow: 1;
-    border-color: #333333;
+
+    border-color: rgb(35, 35, 35);
     border-width: 1px;
 }
 
 .class-item {
     -unity-text-align: middle-left;
-    padding: 5px;
     background-color: rgb(55, 55, 55);
+    
+    border-color: rgb(35, 35, 35);
+    border-width: 1px;
+    
+    padding-left: 20px;
 }
 
 .class-item:hover {
@@ -54,15 +71,19 @@
     background-color: rgb(56, 92, 132);
 }
 
+.detail-panel{
+    flex-grow: 1;
+    flex-shrink: 0;
+}
+
 .detail-scroll {
     flex-grow: 1;
-    padding-left: 10px;
-    padding-right: 10px;
-    padding-top: 6px;
+    flex-shrink: 0;
 }
 
 .detail-container {
     flex-grow: 1;
+    flex-shrink: 0;
 }
 
 .detail-header {
@@ -72,6 +93,9 @@
 }
 
 .empty-message {
+    flex-shrink: 0;
+    flex-grow: 0;
+    
     opacity: 0.8;
 }
 
