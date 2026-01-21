@@ -1,31 +1,57 @@
-.debug-window {
-    flex-direction: row;
-}
-
-.debug-root {
+.window-root {
     flex-direction: row;
     flex-grow: 1;
 }
 
-.debug-sidebar {
+/* Sidebar */
+.sidebar {
+    width: 300px;
+
     flex-shrink: 0;
     flex-grow: 0;
-    padding-left: 6px;
-    padding-right: 6px;
-    padding-top: 6px;
+    flex-direction: column;
+
+    border-width: 1px;
+    background-color: #2b2b2b;
 }
 
-.sidebar-title {
+.toolbar {
+    flex-grow: 0;
+    height: 25px;
+    
+    padding: 5px;
+}
+
+.toolbar-label {
     -unity-font-style: bold;
-}
-
-.debug-class-list {
     flex-grow: 1;
-    margin-top: 6px;
+    -unity-text-align: middle-left;
 }
 
-.debug-class-item {
-    unity-text-align: middle-left;
+.toolbar-button{
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.class-list {
+    flex-grow: 1;
+    border-color: #333333;
+    border-width: 1px;
+}
+
+.class-item {
+    -unity-text-align: middle-left;
+    padding: 5px;
+    background-color: rgb(55, 55, 55);
+}
+
+.class-item:hover {
+    background-color: rgb(75, 75, 75);
+}
+
+.unity-list-view__item--selected,
+.unity-collection-view__item--selected {
+    background-color: rgb(56, 92, 132);
 }
 
 .detail-scroll {
@@ -39,7 +65,7 @@
     flex-grow: 1;
 }
 
-.debug-header {
+.detail-header {
     -unity-font-style: bold;
     font-size: 14px;
     margin-bottom: 6px;

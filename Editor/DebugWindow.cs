@@ -13,12 +13,12 @@ namespace Fsi.Debug
 {
 	public sealed class DebugWindow : EditorWindow
 	{
-		private const float SidebarWidth = 260f;
-		private const string UxmlPath = "Packages/com.fallingsnowinteractive.debug/Editor/DebugWindow.uxml";
 		private const string UssPath = "Packages/com.fallingsnowinteractive.debug/Editor/DebugWindow.uss";
 
 		private readonly List<DebugClassInfo> classes = new();
 		private readonly List<Action> refreshActions = new();
+		
+		// Elements
 		private ListView classListView;
 		private ScrollView detailScrollView;
 		private VisualElement detailContainer;
@@ -30,7 +30,7 @@ namespace Fsi.Debug
 		public static void ShowWindow()
 		{
 			DebugRegistry.Refresh();
-			DebugWindow window = GetWindow<DebugWindow>();
+			DebugWindow window = GetWindow<DebugWindow>("Debugging");
 			window.titleContent = new GUIContent("Debug Window");
 			window.Show();
 		}
@@ -48,54 +48,86 @@ namespace Fsi.Debug
 			EditorApplication.update -= OnEditorUpdate;
 		}
 
+		#region Create GUI
+		
 		public void CreateGUI()
 		{
-			rootVisualElement.Clear();
-			rootVisualElement.AddToClassList("debug-window");
-
-			VisualTreeAsset visualTree = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UxmlPath);
-			if (visualTree != null)
-			{
-				visualTree.CloneTree(rootVisualElement);
-			}
-
 			StyleSheet styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(UssPath);
 			if (styleSheet != null)
 			{
 				rootVisualElement.styleSheets.Add(styleSheet);
 			}
+			
+			rootVisualElement.Clear();
+			rootVisualElement.AddToClassList("window-root");
 
-			VisualElement sidebar = rootVisualElement.Q<VisualElement>("sidebar");
-			classListView = rootVisualElement.Q<ListView>("class-list");
-			detailScrollView = rootVisualElement.Q<ScrollView>("detail-scroll");
-			detailContainer = rootVisualElement.Q<VisualElement>("detail-container");
+			// Build sidebar
+			VisualElement sidebar = CreateSidebar();
+			rootVisualElement.Add(sidebar);
 
-			if (sidebar != null)
-			{
-				sidebar.style.width = SidebarWidth;
-			}
+			// Detail panel
+			detailScrollView = new ScrollView();
+			detailScrollView.AddToClassList("detail-scroll");
+			rootVisualElement.Add(detailScrollView);
+
+			detailContainer = new VisualElement();
+			detailContainer.AddToClassList("detail-container");
+			detailScrollView.Add(detailContainer);
 
 			if (classListView != null)
 			{
 				classListView.selectionType = SelectionType.Single;
 				classListView.makeItem = () =>
-				{
-					Label label = new();
-					label.AddToClassList("debug-class-item");
-					return label;
-				};
+				                         {
+					                         Label label = new();
+					                         label.AddToClassList("class-item");
+					                         return label;
+				                         };
 				classListView.bindItem = (element, index) =>
-				{
-					if (element is Label label && index >= 0 && index < classes.Count)
-					{
-						label.text = classes[index].DisplayName;
-					}
-				};
+				                         {
+					                         if (element is Label label && index >= 0 && index < classes.Count)
+					                         {
+						                         label.text = classes[index].DisplayName;
+					                         }
+				                         };
 				classListView.selectionChanged += OnClassSelectionChanged;
 			}
 
 			RefreshClassList();
 		}
+
+		private VisualElement CreateSidebar()
+		{
+			// Build sidebar
+			VisualElement sidebar = new();
+			sidebar.AddToClassList("sidebar");
+			
+			// Toolbar
+			Toolbar toolbar = new();
+			toolbar.AddToClassList("toolbar");
+			sidebar.Add(toolbar);
+			
+			Label toolbarLabel = new("Debug Classes");
+			toolbarLabel.AddToClassList("toolbar-label");
+			toolbar.Add(toolbarLabel);
+			
+			toolbar.Add(new ToolbarSpacer());
+			
+			ToolbarButton refreshButton = new(null) { text = "Refresh" }; // TODO - Refresh classes
+			refreshButton.AddToClassList("toolbar-button");
+			toolbar.Add(refreshButton);
+
+			// Class List
+			classListView = new ListView();
+			classListView.AddToClassList("class-list");
+			sidebar.Add(classListView);
+			
+			return sidebar;
+		}
+		
+		#endregion
+		
+		#region Registry
 
 		private void OnRegistryUpdated()
 		{
@@ -132,6 +164,10 @@ namespace Fsi.Debug
 			selectedInstanceIndex = 0;
 			RebuildDetails();
 		}
+		
+		#endregion
+		
+		#region Selection
 
 		private void OnClassSelectionChanged(IEnumerable<object> selectedItems)
 		{
@@ -146,6 +182,10 @@ namespace Fsi.Debug
 			selectedInstance = selectedClass?.Instances.FirstOrDefault();
 			RebuildDetails();
 		}
+		
+		#endregion
+		
+		#region Details
 
 		private void RebuildDetails()
 		{
@@ -166,7 +206,7 @@ namespace Fsi.Debug
 			}
 
 			Label header = new(selectedClass.DisplayName);
-			header.AddToClassList("debug-header");
+			header.AddToClassList("detail-header");
 			detailContainer.Add(header);
 
 			AddInstanceSelector();
@@ -479,6 +519,8 @@ namespace Fsi.Debug
 		{
 			return value == null ? "-" : value.ToString();
 		}
+		
+		#endregion
 
 		private void OnEditorUpdate()
 		{
