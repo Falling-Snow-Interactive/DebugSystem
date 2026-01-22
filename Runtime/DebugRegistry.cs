@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Fsi.Debug;
 using Fsi.Debug.Attributes;
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
-namespace Fantazee.Debugging
+namespace Fsi.Debug
 {
 	public static class DebugRegistry
 	{
@@ -87,7 +86,7 @@ namespace Fantazee.Debugging
 
 		private static void BuildCache()
 		{
-			foreach (var type in GetDebuggableTypes())
+			foreach (Type type in GetDebuggableTypes())
 			{
 				DebugClassAttribute debugClassAttribute = type.GetCustomAttribute<DebugClassAttribute>();
 				string displayName = string.IsNullOrWhiteSpace(debugClassAttribute.DisplayName)
@@ -103,7 +102,6 @@ namespace Fantazee.Debugging
 				                               debugClassAttribute.Category,
 				                               members);
 
-				PopulateInstances(classInfo);
 				CachedClasses.Add(classInfo);
 			}
 		}
@@ -140,11 +138,12 @@ namespace Fantazee.Debugging
 			}
 		}
 
+		[SuppressMessage("ReSharper", "LoopCanBeConvertedToQuery")]
 		private static void PopulateMembers(Type type, List<DebugMemberInfo> members)
 		{
 			const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-			foreach (var property in type.GetProperties(flags))
+			foreach (PropertyInfo property in type.GetProperties(flags))
 			{
 				DebugPropertyAttribute attribute = property.GetCustomAttribute<DebugPropertyAttribute>();
 				if (attribute == null)
@@ -154,18 +153,17 @@ namespace Fantazee.Debugging
 
 				Func<object, object> getter = property.CanRead ? BuildGetter(property) : null;
 				Action<object, object> setter = !attribute.ReadOnly && property.CanWrite ? BuildSetter(property) : null;
-				members.Add(new DebugMemberInfo(
-				                                property.Name,
+				members.Add(new DebugMemberInfo(property.Name,
 				                                ResolveDisplayName(property.Name, attribute.DisplayName),
 				                                DebugMemberKind.Property,
 				                                property.PropertyType,
 				                                attribute.Order,
 				                                attribute.Category,
-				                                readOnly: attribute.ReadOnly || !property.CanWrite,
+				                                attribute.ReadOnly || !property.CanWrite,
 				                                getter,
 				                                setter,
-				                                invoker: null,
-				                                parameters: null));
+				                                null,
+				                                null));
 			}
 
 			foreach (FieldInfo field in type.GetFields(flags))
@@ -185,11 +183,11 @@ namespace Fantazee.Debugging
 				                                field.FieldType,
 				                                attribute.Order,
 				                                attribute.Category,
-				                                readOnly: attribute.ReadOnly || field.IsInitOnly,
+				                                attribute.ReadOnly || field.IsInitOnly,
 				                                getter,
 				                                setter,
-				                                invoker: null,
-				                                parameters: null));
+				                                null,
+				                                null));
 			}
 
 			foreach (MethodInfo method in type.GetMethods(flags))
@@ -217,50 +215,6 @@ namespace Fantazee.Debugging
 			}
 		}
 
-		private static void PopulateInstances(DebugClassInfo classInfo)
-		{
-			classInfo.Instances.Clear();
-			Type type = classInfo.Type;
-
-			if (typeof(MonoBehaviour).IsAssignableFrom(type))
-			{
-				Object[] behaviours = Object.FindObjectsByType(type, FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
-				classInfo.Instances.AddRange(behaviours);
-				return;
-			}
-
-			if (typeof(ScriptableObject).IsAssignableFrom(type))
-			{
-				Object[] assets = Resources.FindObjectsOfTypeAll(type);
-				classInfo.Instances.AddRange(assets);
-				#if UNITY_EDITOR
-				foreach (var asset in FindScriptableObjectAssets(type))
-				{
-					if (!classInfo.Instances.Contains(asset))
-					{
-						classInfo.Instances.Add(asset);
-					}
-				}
-				#endif
-			}
-		}
-
-		#if UNITY_EDITOR
-		private static IEnumerable<Object> FindScriptableObjectAssets(Type type)
-		{
-			string[] assetGuids = AssetDatabase.FindAssets($"t:{type.Name}");
-			foreach (string guid in assetGuids)
-			{
-				string path = AssetDatabase.GUIDToAssetPath(guid);
-				Object asset = AssetDatabase.LoadAssetAtPath(path, type);
-				if (asset != null)
-				{
-					yield return asset;
-				}
-			}
-		}
-		#endif
-
 		private static string ResolveDisplayName(string defaultName, string displayName)
 		{
 			return string.IsNullOrWhiteSpace(displayName) ? defaultName : displayName;
@@ -277,7 +231,7 @@ namespace Fantazee.Debugging
 				return Expression.Lambda<Func<object, object>>(castResult, instance).Compile();
 			}
 
-			Debug.LogError("No declaring type.");
+			UnityEngine.Debug.LogError("No declaring type.");
 			return null;
 		}
 
@@ -292,7 +246,7 @@ namespace Fantazee.Debugging
 				return Expression.Lambda<Func<object, object>>(castResult, instance).Compile();
 			}
 			
-			Debug.LogError("No declaring type.");
+			UnityEngine.Debug.LogError("No declaring type.");
 			return null;
 		}
 
@@ -309,7 +263,7 @@ namespace Fantazee.Debugging
 				return Expression.Lambda<Action<object, object>>(assign, instance, value).Compile();
 			}
 			
-			Debug.LogError("No declaring type.");
+			UnityEngine.Debug.LogError("No declaring type.");
 			return null;
 		}
 
@@ -326,7 +280,7 @@ namespace Fantazee.Debugging
 				return Expression.Lambda<Action<object, object>>(assign, instance, value).Compile();
 			}
 			
-			Debug.LogError("No declaring type.");
+			UnityEngine.Debug.LogError("No declaring type.");
 			return null;
 		}
 
@@ -355,7 +309,7 @@ namespace Fantazee.Debugging
 				return Expression.Lambda<Func<object, object[], object>>(body, instance, args).Compile();
 			}
 			
-			Debug.LogError("No declaring type.");
+			UnityEngine.Debug.LogError("No declaring type.");
 			return null;
 		}
 	}

@@ -7,7 +7,7 @@
    Sidebar
    ====================================================== */
 .sidebar-panel {
-    width: 300px;
+    width: 200px;
 
     flex-shrink: 0;
     flex-grow: 0;
@@ -71,14 +71,17 @@
     background-color: rgb(56, 92, 132);
 }
 
+/* ======================================================
+   Details
+   ====================================================== */
 .detail-panel{
     flex-grow: 1;
     flex-shrink: 0;
 }
 
 .detail-scroll {
-    flex-grow: 1;
-    flex-shrink: 0;
+    /*flex-grow: 1;*/
+    /*flex-shrink: 0;*/
 }
 
 .detail-container {
@@ -117,10 +120,15 @@
     -unity-font-style: bold;
     margin-top: 6px;
     margin-bottom: 4px;
+    
+    border-bottom-width: 1px;
+    border-bottom-color: gray;
 }
 
 .member-row {
     margin-bottom: 6px;
+    flex-grow: 1;
+    flex-shrink: 0;
 }
 
 .member-row-value {
@@ -152,19 +160,23 @@
 }
 
 .method-input-row {
+    flex-grow: 1;
     flex-direction: row;
     align-items: center;
     margin-top: 4px;
 }
 
 .parameter-field {
+    flex-grow: 1;
     margin-right: 6px;
 }
 
 .invoke-button {
     min-width: 80px;
+    max-width: 100px;
 }
 
 .method-result {
+    flex-grow: 1;
     margin-left: 6px;
 }

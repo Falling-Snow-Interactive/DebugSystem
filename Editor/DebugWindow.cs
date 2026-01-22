@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Fantazee.Debugging;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -196,7 +195,7 @@ namespace Fsi.Debug
 
 			selectedClass = newSelection;
 			selectedInstanceIndex = 0;
-			selectedInstance = selectedClass?.Instances.FirstOrDefault();
+			selectedInstance = selectedClass?.GetInstances().FirstOrDefault();
 			RebuildDetails();
 		}
 		
@@ -251,7 +250,8 @@ namespace Fsi.Debug
 				return;
 			}
 
-			if (selectedClass.Instances.Count == 0)
+			List<Object> instances = selectedClass.GetInstances();
+			if (instances.Count == 0)
 			{
 				Label emptyLabel = new("No instances found for this type.");
 				emptyLabel.AddToClassList("empty-message");
@@ -261,47 +261,33 @@ namespace Fsi.Debug
 				return;
 			}
 
-			List<string> instanceLabels = selectedClass.Instances
-			                                           .Select(instance => instance == null
-				                                                               ? "<null>"
-				                                                               : $"{instance.name} ({instance.GetInstanceID()})")
-			                                           .ToList();
+			List<string> instanceLabels = instances.Select(instance => instance == null
+				                                                           ? "<null>"
+				                                                           : $"{instance.name} ({instance.GetInstanceID()})")
+			                                       .ToList();
 
 			selectedInstanceIndex = Mathf.Clamp(selectedInstanceIndex, 0, instanceLabels.Count - 1);
-			selectedInstance = selectedClass.Instances[selectedInstanceIndex];
+			selectedInstance = instances[selectedInstanceIndex];
 
 			ToolbarMenu instanceMenu = new();
 			instanceMenu.AddToClassList("toolbar-menu");
 			instanceMenu.text = $"{selectedInstance.name} ({selectedInstance.GetInstanceID()})";
 			foreach (string instanceLabel in instanceLabels)
 			{
-				instanceMenu.menu.AppendAction($"{instanceLabel}", null);
+				instanceMenu.menu.AppendAction($"{instanceLabel}", menuAction =>
+				                                                   {
+					                                                   int newIndex = instanceLabels.IndexOf(menuAction.name);
+					                                                   if (newIndex >= 0 && newIndex < instances.Count)
+					                                                   {
+						                                                   selectedInstanceIndex = newIndex;
+						                                                   selectedInstance = instances[newIndex];
+						                                                   instanceMenu.text = $"{selectedInstance.name} ({selectedInstance.GetInstanceID()})";
+						                                                   RebuildDetails();
+					                                                   }
+				                                                   });
 			}
 
 			toolbar.Add(instanceMenu);
-			
-			// VisualElement instanceRow = new();
-			// instanceRow.AddToClassList("instance-row");
-			//
-			// Label label = new("Instance");
-			// label.AddToClassList("instance-label");
-			// instanceRow.Add(label);
-			//
-			// PopupField<string> popup = new(instanceLabels, selectedInstanceIndex);
-			// popup.AddToClassList("instance-popup");
-			// popup.RegisterValueChangedCallback(evt =>
-			//                                    {
-			// 	                                   int newIndex = instanceLabels.IndexOf(evt.newValue);
-			// 	                                   if (newIndex >= 0 && newIndex < selectedClass.Instances.Count)
-			// 	                                   {
-			// 		                                   selectedInstanceIndex = newIndex;
-			// 		                                   selectedInstance = selectedClass.Instances[newIndex];
-			// 		                                   RebuildDetails();
-			// 	                                   }
-			//                                    });
-			//
-			// instanceRow.Add(popup);
-			// detailContainer.Add(instanceRow);
 		}
 
 		private void AddMemberDetails()
@@ -323,8 +309,8 @@ namespace Fsi.Debug
 			foreach (DebugMemberInfo member in selectedClass.Members
 			                                                .OrderBy(info => string.IsNullOrWhiteSpace(info.Category))
 			                                                .ThenBy(info => info.Category)
-			                                                .ThenBy(info => info.Order)
-			                                                .ThenBy(info => info.DisplayName))
+			                                                .ThenBy(info => info.Kind)
+			                                                .ThenBy(info => info.Order))
 			{
 				if (member.Category != currentCategory)
 				{

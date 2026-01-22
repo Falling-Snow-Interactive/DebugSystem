@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEditor;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Fsi.Debug
 {
@@ -20,6 +23,7 @@ namespace Fsi.Debug
 		public int Order { get; }
 		public string Category { get; }
 		public bool ReadOnly { get; }
+		
 		public Func<object, object> Getter { get; }
 		public Action<object, object> Setter { get; }
 		public Func<object, object[], object> Invoker { get; }
@@ -59,7 +63,6 @@ namespace Fsi.Debug
 		public int Order { get; }
 		public string Category { get; }
 		public List<DebugMemberInfo> Members { get; }
-		public List<UnityEngine.Object> Instances { get; }
 		
 		public DebugClassInfo(Type type, string displayName, int order, string category, List<DebugMemberInfo> members)
 		{
@@ -68,7 +71,52 @@ namespace Fsi.Debug
 			Order = order;
 			Category = category;
 			Members = members;
-			Instances = new List<UnityEngine.Object>();
 		}
+
+		public List<Object> GetInstances()
+		{
+			List<Object> instances = new();
+			
+			if (typeof(MonoBehaviour).IsAssignableFrom(Type))
+			{
+				Object[] behaviours = Object.FindObjectsByType(Type, FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
+				instances.AddRange(behaviours);
+				return instances;
+			}
+
+			if (typeof(ScriptableObject).IsAssignableFrom(Type))
+			{
+				Object[] assets = Resources.FindObjectsOfTypeAll(Type);
+				instances.AddRange(assets);
+				
+				#if UNITY_EDITOR
+				foreach (Object asset in FindScriptableObjectAssets(Type))
+				{
+					if (!instances.Contains(asset))
+					{
+						instances.Add(asset);
+					}
+				}
+				#endif
+			}
+
+			return instances;
+		}
+		
+		#if UNITY_EDITOR
+		private static IEnumerable<Object> FindScriptableObjectAssets(Type type)
+		{
+			string[] assetGuids = AssetDatabase.FindAssets($"t:{type.Name}");
+			foreach (string guid in assetGuids)
+			{
+				string path = AssetDatabase.GUIDToAssetPath(guid);
+				Object asset = AssetDatabase.LoadAssetAtPath(path, type);
+				if (asset != null)
+				{
+					yield return asset;
+				}
+			}
+		}
+		#endif
 	}
 }
