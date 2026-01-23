@@ -307,7 +307,7 @@ namespace Fsi.Debug
 
 			string currentCategory = null;
 			foreach (DebugMemberInfo member in selectedClass.Members
-			                                                .OrderBy(info => string.IsNullOrWhiteSpace(info.Category))
+			                                                .OrderBy(info => !string.IsNullOrWhiteSpace(info.Category))
 			                                                .ThenBy(info => info.Category)
 			                                                .ThenBy(info => info.Kind)
 			                                                .ThenBy(info => info.Order))
@@ -378,7 +378,7 @@ namespace Fsi.Debug
 			row.Add(nameLabel);
 
 			VisualElement inputRow = new();
-			inputRow.AddToClassList("method-input-row");
+			inputRow.AddToClassList("method-input-group");
 
 			object[] parameterValues = member.Parameters?.Select(GetDefaultValue).ToArray() ?? Array.Empty<object>();
 
@@ -400,10 +400,11 @@ namespace Fsi.Debug
 			}
 
 			Label resultLabel = null;
+			row.Add(inputRow);
+			
 			Button button = new() { text = "Invoke" };
 			button.AddToClassList("invoke-button");
-			inputRow.Add(button);
-			row.Add(inputRow);
+			row.Add(button);
 
 			if (member.ValueType != typeof(void))
 			{

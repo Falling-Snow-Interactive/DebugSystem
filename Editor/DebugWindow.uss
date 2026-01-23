@@ -80,8 +80,6 @@
 }
 
 .detail-scroll {
-    /*flex-grow: 1;*/
-    /*flex-shrink: 0;*/
 }
 
 .detail-container {
@@ -91,8 +89,11 @@
 
 .detail-header {
     -unity-font-style: bold;
-    font-size: 14px;
+    font-size: 18px;
     margin-bottom: 6px;
+    
+    border-bottom-color: gray;
+    border-bottom-width: 2;
 }
 
 .empty-message {
@@ -126,7 +127,6 @@
 }
 
 .member-row {
-    margin-bottom: 6px;
     flex-grow: 1;
     flex-shrink: 0;
 }
@@ -159,21 +159,25 @@
     -unity-font-style: bold;
 }
 
-.method-input-row {
+.method-input-group {
     flex-grow: 1;
-    flex-direction: row;
+    flex-direction: column;
+    
     align-items: center;
+    
     margin-top: 4px;
 }
 
 .parameter-field {
     flex-grow: 1;
-    margin-right: 6px;
+    flex-shrink: 0;
+    
+    width: 100%;
 }
 
 .invoke-button {
+    flex-grow: 1;
     min-width: 80px;
-    max-width: 100px;
 }
 
 .method-result {
