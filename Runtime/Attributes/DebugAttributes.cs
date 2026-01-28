@@ -19,8 +19,8 @@ namespace Fsi.Debug.Attributes
 		}
 	}
 
+	[UsedImplicitly, MeansImplicitUse]
 	[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
-	[UsedImplicitly]
 	public sealed class DebugPropertyAttribute : Attribute
 	{
 		public string DisplayName { get; }
@@ -37,8 +37,8 @@ namespace Fsi.Debug.Attributes
 		}
 	}
 
+	[UsedImplicitly, MeansImplicitUse]
 	[AttributeUsage(AttributeTargets.Method, Inherited = true, AllowMultiple = false)]
-	[UsedImplicitly]
 	public sealed class DebugMethodAttribute : Attribute
 	{
 		public string DisplayName { get; }
