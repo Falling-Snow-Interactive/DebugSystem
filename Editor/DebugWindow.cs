@@ -474,11 +474,27 @@ namespace Fsi.Debug
 				return field;
 			}
 
+			if (valueType == typeof(long))
+			{
+				LongField field = new() { value = initialValue is long longValue ? longValue : 0L };
+				field.RegisterValueChangedCallback(evt => onValueChanged?.Invoke(evt.newValue));
+				refreshActions.Add(() => field.SetValueWithoutNotify(valueGetter?.Invoke() is long current ? current : 0L));
+				return field;
+			}
+
 			if (valueType == typeof(float))
 			{
 				FloatField field = new() { value = initialValue is float floatValue ? floatValue : 0f };
 				field.RegisterValueChangedCallback(evt => onValueChanged?.Invoke(evt.newValue));
 				refreshActions.Add(() => field.SetValueWithoutNotify(valueGetter?.Invoke() is float current ? current : 0f));
+				return field;
+			}
+
+			if (valueType == typeof(double))
+			{
+				DoubleField field = new() { value = initialValue is double doubleValue ? doubleValue : 0d };
+				field.RegisterValueChangedCallback(evt => onValueChanged?.Invoke(evt.newValue));
+				refreshActions.Add(() => field.SetValueWithoutNotify(valueGetter?.Invoke() is double current ? current : 0d));
 				return field;
 			}
 
@@ -521,11 +537,57 @@ namespace Fsi.Debug
 				return field;
 			}
 
+			if (valueType == typeof(Vector4))
+			{
+				Vector4Field field = new() { value = initialValue is Vector4 vec ? vec : Vector4.zero };
+				field.RegisterValueChangedCallback(evt => onValueChanged?.Invoke(evt.newValue));
+				refreshActions.Add(() => field.SetValueWithoutNotify(valueGetter?.Invoke() is Vector4 current ? current : Vector4.zero));
+				return field;
+			}
+
+			if (valueType == typeof(Rect))
+			{
+				RectField field = new() { value = initialValue is Rect rect ? rect : new Rect() };
+				field.RegisterValueChangedCallback(evt => onValueChanged?.Invoke(evt.newValue));
+				refreshActions.Add(() => field.SetValueWithoutNotify(valueGetter?.Invoke() is Rect current ? current : new Rect()));
+				return field;
+			}
+
+			if (valueType == typeof(Bounds))
+			{
+				BoundsField field = new() { value = initialValue is Bounds bounds ? bounds : new Bounds() };
+				field.RegisterValueChangedCallback(evt => onValueChanged?.Invoke(evt.newValue));
+				refreshActions.Add(() => field.SetValueWithoutNotify(valueGetter?.Invoke() is Bounds current ? current : new Bounds()));
+				return field;
+			}
+
 			if (valueType == typeof(Color))
 			{
 				ColorField field = new() { value = initialValue is Color color ? color : Color.white };
 				field.RegisterValueChangedCallback(evt => onValueChanged?.Invoke(evt.newValue));
 				refreshActions.Add(() => field.SetValueWithoutNotify(valueGetter?.Invoke() is Color current ? current : Color.white));
+				return field;
+			}
+
+			if (typeof(Object).IsAssignableFrom(valueType))
+			{
+				ObjectField field = new()
+				{
+					objectType = valueType,
+					value = initialValue as Object
+				};
+				field.RegisterValueChangedCallback(evt => onValueChanged?.Invoke(evt.newValue));
+				refreshActions.Add(() =>
+				                   {
+					                   if (valueGetter?.Invoke() is Object current)
+					                   {
+						                   field.SetValueWithoutNotify(current);
+					                   }
+					                   else
+					                   {
+						                   field.SetValueWithoutNotify(null);
+					                   }
+				                   });
 				return field;
 			}
 
