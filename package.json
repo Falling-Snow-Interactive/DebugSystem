@@ -1,6 +1,6 @@
 {
   "name": "com.fallingsnowinteractive.debug",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "displayName": "FSI Debug System",
   "description": "Debug System package developed by Falling Snow Interactive.",
   "unity": "6000.2",
