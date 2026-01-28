@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Fsi.General.Icons;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -31,6 +32,10 @@ namespace Fsi.Debug
 			DebugRegistry.Refresh();
 			DebugWindow window = GetWindow<DebugWindow>("Debugging");
 			window.titleContent = new GUIContent("Debug Window");
+
+			Texture2D icon = AssetDatabase.LoadAssetAtPath<Texture2D>(IconPaths.Debug_Grey);
+			window.titleContent.image = icon;
+			
 			window.Show();
 		}
 
